@@ -1,0 +1,756 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Windows 12 Fan — Ultra Mega Transcendent</title>
+<style>
+/* ---------- Reset ---------- */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;width:100%;font-family:"Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial;overflow:hidden;background:#000;color:#fff}
+
+/* ---------- Intro cutscene ---------- */
+#cutscene{
+  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;z-index:99999;
+}
+#windows-logo {
+  width:240px;height:240px;border-radius:36px;background:linear-gradient(135deg,#ff00f7 0%,#9a00ff 60%,#6b00ff 100%);
+  position:relative;box-shadow:0 30px 100px rgba(107,0,255,0.35), inset 0 -6px 20px rgba(255,255,255,0.03);
+  transform:scale(0.22);opacity:0;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.06)
+}
+.logo-grid{position:relative;width:80%;height:80%}
+.logo-square{position:absolute;width:42%;height:42%;background:#fff;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,0.12)}
+.logo-square.tl{left:6%;top:6%}
+.logo-square.tr{right:6%;top:6%}
+.logo-square.bl{left:6%;bottom:6%}
+.logo-square.br{right:6%;bottom:6%}
+
+/* animations */
+@keyframes logoAppear {0%{transform:scale(0.22);opacity:0}50%{transform:scale(1.05);opacity:1}100%{transform:scale(1);opacity:1}}
+/* we'll then scale it massively to create a zoom-in-then-fade effect using JS transitions */
+
+/* ---------- Desktop ---------- */
+#desktop{display:none;position:fixed;inset:0;overflow:hidden;background:#050007}
+
+/* neon animated wallpaper */
+.wallpaper {
+  position:absolute;inset:0;background:linear-gradient(120deg,#1b0038 0%, #3b0070 35%, #7b00ff 60%, #ff00b3 100%);
+  animation: wallpaperShift 12s linear infinite;
+  filter: saturate(1.1);
+}
+@keyframes wallpaperShift {
+  0%{background-position:0% 50%}
+  50%{background-position:100% 50%}
+  100%{background-position:0% 50%}
+}
+.wallpaper::after{
+  content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center, rgba(255,255,255,0.02), transparent 30%);pointer-events:none;
+}
+
+/* glass layer */
+.wallpaper-blur{position:absolute;inset:0;backdrop-filter: blur(6px);}
+
+/* ---------- Desktop icons area ---------- */
+.desktop-icons{position:absolute;top:36px;left:28px;display:flex;flex-direction:column;gap:16px;user-select:none}
+.icon-row{display:flex;gap:18px}
+.icon{width:86px;text-align:center;color:#fff;cursor:pointer}
+.glyph{width:72px;height:72px;border-radius:16px;margin:0 auto;background:linear-gradient(135deg,#7b00ff,#ff00b3);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 12px 40px rgba(123,0,255,0.18);transition:transform .16s ease, box-shadow .16s ease;border:1px solid rgba(255,255,255,0.05)}
+.icon:hover .glyph{transform:translateY(-6px) scale(1.06);box-shadow:0 22px 50px rgba(123,0,255,0.28)}
+.icon-label{margin-top:8px;font-size:13px;text-shadow:0 1px 0 rgba(0,0,0,0.4)}
+
+/* ---------- Taskbar ---------- */
+#taskbar{position:fixed;left:0;right:0;bottom:0;height:62px;padding:8px 14px;display:flex;align-items:center;gap:12px;background:rgba(0,0,0,0.36);
+  backdrop-filter: blur(10px);box-shadow:0 -8px 40px rgba(0,0,0,0.5)}
+#start-button{display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:12px;background:linear-gradient(180deg,#005ac1,#0078d7);color:#fff;font-weight:700;cursor:pointer}
+#start-button .mini{width:20px;height:20px;border-radius:4px;background:linear-gradient(135deg,#ff00f7,#7b00ff)}
+#search{margin-left:8px;padding:8px 12px;border-radius:12px;border:none;width:260px;outline:none}
+
+/* area for minimized windows in taskbar */
+#taskbar-windows{display:flex;gap:8px;margin-left:auto;align-items:center}
+
+/* minimized icon */
+.task-icon{width:44px;height:44px;border-radius:8px;background:linear-gradient(135deg,#9a00ff,#ff00b3);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,0.25)}
+
+/* ---------- Start menu ---------- */
+#start-menu{position:fixed;left:18px;bottom:80px;width:320px;background:rgba(3,3,6,0.86);border-radius:14px;padding:12px;display:none;box-shadow:0 30px 80px rgba(0,0,0,0.45);backdrop-filter:blur(8px)}
+.start-grid{display:flex;flex-direction:column;gap:10px}
+.start-app{display:flex;gap:10px;align-items:center;padding:8px;border-radius:10px;color:#fff;cursor:pointer;transition:background .12s}
+.start-app:hover{background:linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))}
+.start-app .ic{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,#9a00ff,#ff00b3);display:flex;align-items:center;justify-content:center}
+
+/* ---------- App windows ---------- */
+.window{position:absolute;width:720px;height:520px;border-radius:14px;background:#fff;color:#111;display:none;flex-direction:column;box-shadow:0 50px 120px rgba(20,6,40,0.45);overflow:hidden;border:1px solid rgba(0,0,0,0.06)}
+.win-header{height:56px;background:linear-gradient(90deg,#0866c7,#0078d7);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:grab}
+.win-title{font-weight:700}
+.win-controls{display:flex;gap:8px;align-items:center}
+.win-controls .btn{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.08);cursor:pointer}
+.win-body{padding:12px;flex:1;overflow:auto;background:linear-gradient(180deg, #fff, #fbfbff)}
+
+/* resizer handle */
+.window .resizer{position:absolute;right:10px;bottom:10px;width:14px;height:14px;cursor:nwse-resize;border-radius:4px;background:transparent;border:2px solid rgba(0,0,0,0.12)}
+
+/* minimized animation */
+@keyframes minimizeAnim {0%{transform:translateY(0) scale(1)}100%{transform:translateY(20px) scale(0.9);opacity:0.6}}
+
+/* paint */
+.paint-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:12px}
+#paint-canvas{background:#fff;border-radius:8px;display:block;border:1px solid #ddd}
+
+/* word */
+#word-area{width:100%;height:calc(100% - 16px);padding:12px;border-radius:8px;border:1px solid #e6e6e6;outline:none;overflow:auto}
+
+/* file explorer */
+.file-list{display:flex;flex-direction:column;gap:8px}
+.file-item{padding:8px;border-radius:8px;background:linear-gradient(180deg,#fafafa,#f0f0ff);color:#111;cursor:pointer;border:1px solid #eee}
+
+/* win12ai */
+#ai-convo{height:300px;overflow:auto;background:#f7f7fc;border:1px solid #eee;padding:8px;border-radius:8px;margin-bottom:8px}
+.ai-message{margin:6px 0;padding:8px;border-radius:8px}
+.ai-user{background:#dfe9ff;text-align:right}
+.ai-bot{background:#fff}
+
+/* small screens */
+@media (max-width:1000px){
+  .window{width:92%;height:70%;left:4%}
+  #search{width:140px}
+}
+</style>
+</head>
+<body>
+
+<!-- CUTSCENE -->
+<div id="cutscene" aria-hidden="true">
+  <div id="windows-logo" role="img" aria-label="Windows logo (fan)">
+    <div class="logo-grid">
+      <div class="logo-square tl"></div>
+      <div class="logo-square tr"></div>
+      <div class="logo-square bl"></div>
+      <div class="logo-square br"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DESKTOP -->
+<div id="desktop" aria-hidden="true">
+  <div class="wallpaper" aria-hidden="true"></div>
+  <div class="wallpaper-blur" aria-hidden="true"></div>
+
+  <!-- Desktop icons -->
+  <div class="desktop-icons" id="desktopIcons">
+    <div class="icon-row">
+      <div class="icon" data-app="appWord" tabindex="0" title="Word" onclick="openWindow('appWord')">
+        <div class="glyph"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M8 10 L20 54 L32 26 L44 54 L56 10" fill="none" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="icon-label">Word</div>
+      </div>
+
+      <div class="icon" data-app="appPaint" tabindex="0" title="Paint" onclick="openWindow('appPaint')">
+        <div class="glyph"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><path d="M48 12c0 0-8 4-18 14s-14 18-14 18 4 6 12 6 20-6 26-18c6-12-6-20-6-20z" fill="white" opacity="0.95"/><circle cx="18" cy="46" r="4" fill="#fff" /></svg></div>
+        <div class="icon-label">Paint</div>
+      </div>
+
+      <div class="icon" data-app="appCalc" tabindex="0" title="Calculator" onclick="openWindow('appCalc')">
+        <div class="glyph"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect x="12" y="8" width="40" height="48" rx="6" fill="white" opacity="0.95"/><rect x="18" y="16" width="28" height="10" rx="2" fill="#6b00ff" /><circle cx="26" cy="36" r="2.6" fill="#6b00ff"/><circle cx="34" cy="36" r="2.6" fill="#6b00ff"/><circle cx="42" cy="36" r="2.6" fill="#6b00ff"/><rect x="24" y="42" width="16" height="6" rx="2" fill="#6b00ff"/></svg></div>
+        <div class="icon-label">Calculator</div>
+      </div>
+
+      <div class="icon" data-app="appFiles" tabindex="0" title="File Explorer" onclick="openWindow('appFiles')">
+        <div class="glyph"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="14" width="48" height="36" rx="4" fill="white" opacity="0.95"/><path d="M16 22h20l6 6v14H16z" fill="#6b00ff" opacity="0.9"/></svg></div>
+        <div class="icon-label">Files</div>
+      </div>
+
+      <div class="icon" data-app="appAI" tabindex="0" title="Win12Ai" onclick="openWindow('appAI')">
+        <div class="glyph"><svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg"><circle cx="32" cy="24" r="10" fill="white" opacity="0.95"/><rect x="20" y="36" width="24" height="14" rx="4" fill="#6b00ff"/></svg></div>
+        <div class="icon-label">Win12Ai</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Taskbar -->
+  <div id="taskbar" role="toolbar">
+    <div id="start-button" onclick="toggleStart()">
+      <div class="mini" aria-hidden="true"></div>
+      <div style="font-size:14px">Start</div>
+    </div>
+    <input id="search" placeholder="Search apps..." oninput="filterApps(this.value)" aria-label="Search apps">
+    <div id="taskbar-windows" aria-live="polite" aria-atomic="true"></div>
+  </div>
+
+  <!-- Start menu -->
+  <div id="start-menu" role="menu" aria-hidden="true">
+    <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+      <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,#9a00ff,#ff00b3)"></div>
+      <div>
+        <div style="color:#fff;font-weight:700">Windows 12 Fan</div>
+        <div style="color:#ddd;font-size:13px">Welcome back</div>
+      </div>
+    </div>
+    <div class="start-grid" id="startGrid">
+      <div class="start-app" onclick="openWindow('appWord')"><div class="ic"></div><div>Word</div></div>
+      <div class="start-app" onclick="openWindow('appPaint')"><div class="ic"></div><div>Paint</div></div>
+      <div class="start-app" onclick="openWindow('appCalc')"><div class="ic"></div><div>Calculator</div></div>
+      <div class="start-app" onclick="openWindow('appFiles')"><div class="ic"></div><div>File Explorer</div></div>
+      <div class="start-app" onclick="openWindow('appAI')"><div class="ic"></div><div>Win12Ai</div></div>
+    </div>
+  </div>
+
+  <!-- APP WINDOWS -->
+
+  <!-- WORD -->
+  <div class="window" id="appWord" role="dialog" aria-label="Word">
+    <div class="win-header" onmousedown="startDrag(event,this.parentElement)" ondblclick="toggleMaximize('appWord')">
+      <div class="win-title">Word</div>
+      <div class="win-controls">
+        <div class="btn" onclick="minimizeWindow('appWord')">_</div>
+        <div class="btn" onclick="toggleMaximize('appWord')">▢</div>
+        <div class="btn" onclick="closeWindow('appWord')">✕</div>
+      </div>
+    </div>
+    <div class="win-body">
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="btn-primary" onclick="document.getElementById('word-area').focus()">New</button>
+        <button class="btn-primary" onclick="downloadWord()">Save</button>
+      </div>
+      <div id="word-area" contenteditable="true" aria-label="Document editor" style="height:100%">Type your masterpiece here...</div>
+    </div>
+    <div class="resizer" onmousedown="startResize(event,this.parentElement)"></div>
+  </div>
+
+  <!-- PAINT -->
+  <div class="window" id="appPaint" role="dialog" aria-label="Paint">
+    <div class="win-header" onmousedown="startDrag(event,this.parentElement)" ondblclick="toggleMaximize('appPaint')">
+      <div class="win-title">Paint</div>
+      <div class="win-controls">
+        <div class="btn" onclick="minimizeWindow('appPaint')">_</div>
+        <div class="btn" onclick="toggleMaximize('appPaint')">▢</div>
+        <div class="btn" onclick="closeWindow('appPaint')">✕</div>
+      </div>
+    </div>
+    <div class="win-body">
+      <div class="paint-toolbar">
+        <label>Brush: <input id="brushSize" type="range" min="1" max="36" value="6"></label>
+        <label>Color: <input id="brushColor" type="color" value="#000000"></label>
+        <button class="btn-primary" onclick="clearCanvas()">Clear</button>
+        <button class="btn-primary" onclick="downloadCanvas()">Save PNG</button>
+      </div>
+      <canvas id="paint-canvas" width="640" height="360" aria-label="Paint canvas"></canvas>
+    </div>
+    <div class="resizer" onmousedown="startResize(event,this.parentElement)"></div>
+  </div>
+
+  <!-- CALCULATOR -->
+  <div class="window" id="appCalc" role="dialog" aria-label="Calculator">
+    <div class="win-header" onmousedown="startDrag(event,this.parentElement)" ondblclick="toggleMaximize('appCalc')">
+      <div class="win-title">Calculator</div>
+      <div class="win-controls">
+        <div class="btn" onclick="minimizeWindow('appCalc')">_</div>
+        <div class="btn" onclick="toggleMaximize('appCalc')">▢</div>
+        <div class="btn" onclick="closeWindow('appCalc')">✕</div>
+      </div>
+    </div>
+    <div class="win-body">
+      <input id="calcDisplay" style="width:100%;padding:10px;font-size:18px;margin-bottom:8px" aria-label="Calculator display" readonly>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <button class="btn-primary" onclick="calcPress('7')">7</button>
+        <button class="btn-primary" onclick="calcPress('8')">8</button>
+        <button class="btn-primary" onclick="calcPress('9')">9</button>
+        <button class="btn-primary" onclick="calcPress('/')">/</button>
+
+        <button class="btn-primary" onclick="calcPress('4')">4</button>
+        <button class="btn-primary" onclick="calcPress('5')">5</button>
+        <button class="btn-primary" onclick="calcPress('6')">6</button>
+        <button class="btn-primary" onclick="calcPress('*')">*</button>
+
+        <button class="btn-primary" onclick="calcPress('1')">1</button>
+        <button class="btn-primary" onclick="calcPress('2')">2</button>
+        <button class="btn-primary" onclick="calcPress('3')">3</button>
+        <button class="btn-primary" onclick="calcPress('-')">-</button>
+
+        <button class="btn-primary" onclick="calcPress('0')">0</button>
+        <button class="btn-primary" onclick="calcPress('.')">.</button>
+        <button class="btn-primary" onclick="calcPress('=')">=</button>
+        <button class="btn-primary" onclick="calcPress('C')">C</button>
+      </div>
+    </div>
+    <div class="resizer" onmousedown="startResize(event,this.parentElement)"></div>
+  </div>
+
+  <!-- FILE EXPLORER -->
+  <div class="window" id="appFiles" role="dialog" aria-label="File Explorer">
+    <div class="win-header" onmousedown="startDrag(event,this.parentElement)" ondblclick="toggleMaximize('appFiles')">
+      <div class="win-title">File Explorer</div>
+      <div class="win-controls">
+        <div class="btn" onclick="minimizeWindow('appFiles')">_</div>
+        <div class="btn" onclick="toggleMaximize('appFiles')">▢</div>
+        <div class="btn" onclick="closeWindow('appFiles')">✕</div>
+      </div>
+    </div>
+    <div class="win-body">
+      <div style="display:flex;gap:12px">
+        <div style="width:35%">
+          <div style="font-weight:700;margin-bottom:8px">Folders</div>
+          <div class="file-list" id="fileList">
+            <!-- items injected by JS -->
+          </div>
+        </div>
+        <div style="flex:1">
+          <div style="font-weight:700;margin-bottom:8px">Preview</div>
+          <div id="filePreview" style="background:#fff;padding:12px;border-radius:8px;border:1px solid #eee;color:#111">Select a file to preview</div>
+        </div>
+      </div>
+    </div>
+    <div class="resizer" onmousedown="startResize(event,this.parentElement)"></div>
+  </div>
+
+  <!-- WIN12AI -->
+  <div class="window" id="appAI" role="dialog" aria-label="Win12Ai">
+    <div class="win-header" onmousedown="startDrag(event,this.parentElement)" ondblclick="toggleMaximize('appAI')">
+      <div class="win-title">Win12Ai</div>
+      <div class="win-controls">
+        <div class="btn" onclick="minimizeWindow('appAI')">_</div>
+        <div class="btn" onclick="toggleMaximize('appAI')">▢</div>
+        <div class="btn" onclick="closeWindow('appAI')">✕</div>
+      </div>
+    </div>
+    <div class="win-body">
+      <div id="ai-convo" aria-live="polite"></div>
+      <div style="display:flex;gap:8px">
+        <input id="ai-input" placeholder="Ask Win12Ai something..." style="flex:1;padding:10px;border-radius:8px;border:1px solid #ddd">
+        <button class="btn-primary" onclick="sendAI()">Send</button>
+      </div>
+    </div>
+    <div class="resizer" onmousedown="startResize(event,this.parentElement)"></div>
+  </div>
+
+</div>
+
+<script>
+/* ------------------------------ Audio (WebAudio synthesized) ------------------------------ */
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+const audioCtx = new AudioCtx();
+
+// helper: play click sound
+function playClick() {
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type = 'sine';
+  o.frequency.value = 880;
+  g.gain.value = 0.0001;
+  o.connect(g); g.connect(audioCtx.destination);
+  const now = audioCtx.currentTime;
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.exponentialRampToValueAtTime(0.08, now + 0.005);
+  o.start(now);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + 0.12);
+  o.stop(now + 0.14);
+}
+
+// boot sound: short sequence
+function playBootSound() {
+  const now = audioCtx.currentTime;
+  // sequence of tones
+  const freqs = [220, 330, 440, 660];
+  freqs.forEach((f,i)=>{
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sawtooth';
+    o.frequency.value = f;
+    o.connect(g); g.connect(audioCtx.destination);
+    g.gain.setValueAtTime(0.0001, now + i*0.12);
+    g.gain.exponentialRampToValueAtTime(0.08, now + i*0.12 + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + i*0.12 + 0.11);
+    o.start(now + i*0.12);
+    o.stop(now + i*0.12 + 0.12);
+  });
+}
+
+/* ------------------------------ Intro choreography ------------------------------ */
+const cutscene = document.getElementById('cutscene');
+const logo = document.getElementById('windows-logo');
+const desktop = document.getElementById('desktop');
+const startMenu = document.getElementById('start-menu');
+const taskbarWindows = document.getElementById('taskbar-windows');
+
+function playIntro() {
+  // small delay to allow page to load visuals
+  setTimeout(()=>{
+    // animate logo appear
+    logo.style.animation = 'logoAppear 1.6s ease forwards';
+    playBootSound();
+    // after appear, do dramatic zoom into logo, then fade to desktop
+    setTimeout(()=>{
+      // user gesture may be required for audio in some browsers. try to resume if suspended.
+      if(audioCtx.state === 'suspended' && typeof audioCtx.resume === 'function') {
+        audioCtx.resume().catch(()=>{});
+      }
+      // zoom massively
+      logo.style.transition = 'transform 1.0s cubic-bezier(.2,.9,.2,1), opacity 0.7s';
+      logo.style.transform = 'scale(8)';
+      // fade cutscene
+      setTimeout(()=> {
+        cutscene.style.transition = 'opacity 0.9s linear';
+        cutscene.style.opacity = '0';
+        setTimeout(()=> {
+          cutscene.style.display = 'none';
+          showDesktop();
+        }, 900);
+      }, 500);
+    }, 1800);
+  }, 200);
+}
+function showDesktop() {
+  desktop.style.display = 'block';
+  document.body.style.background = ''; // clear black
+  // open start menu for effect
+  setTimeout(()=> openStartMenu(true), 220);
+  // add small welcome message in AI maybe
+}
+
+/* start intro */
+playIntro();
+
+/* ------------------------------ UI: Start menu / Search / Icons ------------------------------ */
+function toggleStart(){ playClick(); if(startMenu.style.display==='flex') closeStartMenu(); else openStartMenu(); }
+function openStartMenu(auto=false){
+  startMenu.style.display='flex';
+  startMenu.style.flexDirection='column';
+  startMenu.setAttribute('aria-hidden','false');
+  if(auto) setTimeout(()=> document.getElementById('search').focus(), 220);
+  playClick();
+}
+function closeStartMenu(){ startMenu.style.display='none'; startMenu.setAttribute('aria-hidden','true'); }
+
+function filterApps(q){
+  q = (q||'').trim().toLowerCase();
+  document.querySelectorAll('.icon').forEach(ic=>{
+    const label = ic.querySelector('.icon-label').innerText.toLowerCase();
+    ic.style.display = (!q || label.includes(q)) ? 'block' : 'none';
+  });
+  document.querySelectorAll('.start-app').forEach(sa=>{
+    sa.style.display = (!q || sa.innerText.toLowerCase().includes(q)) ? 'flex' : 'none';
+  });
+}
+
+/* ------------------------------ Windows: open/close/minimize/maximize/resize ------------------------------ */
+let zCounter = 100;
+function bringToFront(el){ zCounter++; el.style.zIndex = zCounter; }
+
+function openWindow(id){
+  playClick();
+  const win = document.getElementById(id);
+  if(!win) return;
+  win.style.display = 'flex';
+  // default size & position if first open
+  if(!win.style.left) {
+    win.style.left = Math.max(40, (window.innerWidth - win.offsetWidth)/2 + (Math.random()*120-60)) + 'px';
+    win.style.top = Math.max(40, (window.innerHeight - win.offsetHeight)/2 + (Math.random()*80-40)) + 'px';
+  }
+  bringToFront(win);
+  // add to taskbar (if not already)
+  ensureTaskbarIcon(id);
+}
+
+function closeWindow(id){
+  playClick();
+  const w = document.getElementById(id);
+  if(w) w.style.display='none';
+  removeTaskbarIcon(id);
+}
+
+function minimizeWindow(id){
+  playClick();
+  const w = document.getElementById(id);
+  if(!w) return;
+  w.style.display='none';
+  ensureTaskbarIcon(id);
+}
+
+/* taskbar icons management */
+function ensureTaskbarIcon(id){
+  if(document.getElementById('tb-'+id)) return;
+  const title = document.querySelector('#'+id+' .win-title') ? document.querySelector('#'+id+' .win-title').innerText : id;
+  const btn = document.createElement('div');
+  btn.className = 'task-icon';
+  btn.id = 'tb-'+id;
+  btn.title = title;
+  btn.innerText = title[0] || '?';
+  btn.onclick = ()=> {
+    const w = document.getElementById(id);
+    if(w && w.style.display==='flex') {
+      // if visible, minimize
+      minimizeWindow(id);
+    } else {
+      openWindow(id);
+    }
+    playClick();
+  };
+  btn.onmouseenter = ()=> showWindowPreview(id, true);
+  btn.onmouseleave = ()=> showWindowPreview(id, false);
+  taskbarWindows.appendChild(btn);
+}
+
+function removeTaskbarIcon(id){
+  const el = document.getElementById('tb-'+id);
+  if(el) el.remove();
+}
+
+/* preview: simple title tooltip near taskbar icon */
+let previewEl = null;
+function showWindowPreview(id, show){
+  if(show){
+    const tb = document.getElementById('tb-'+id);
+    if(!tb) return;
+    previewEl = document.createElement('div');
+    previewEl.style.position='absolute';
+    previewEl.style.bottom='80px';
+    const rect = tb.getBoundingClientRect();
+    previewEl.style.left = (rect.left) + 'px';
+    previewEl.style.padding='8px 10px';
+    previewEl.style.background='rgba(0,0,0,0.8)';
+    previewEl.style.borderRadius='8px';
+    previewEl.style.color='#fff';
+    previewEl.style.boxShadow='0 12px 40px rgba(0,0,0,0.3)';
+    previewEl.innerText = document.querySelector('#'+id+' .win-title').innerText;
+    document.body.appendChild(previewEl);
+  } else {
+    if(previewEl) previewEl.remove();
+    previewEl = null;
+  }
+}
+
+/* maximize toggle */
+function toggleMaximize(id){
+  playClick();
+  const w = document.getElementById(id);
+  if(!w) return;
+  if(w.dataset.max === '1'){
+    // restore
+    w.style.width = w.dataset.prevWidth || '720px';
+    w.style.height = w.dataset.prevHeight || '520px';
+    w.style.left = w.dataset.prevLeft || w.style.left;
+    w.style.top = w.dataset.prevTop || w.style.top;
+    w.dataset.max = '0';
+    bringToFront(w);
+  } else {
+    // save
+    w.dataset.prevWidth = w.style.width || w.offsetWidth + 'px';
+    w.dataset.prevHeight = w.style.height || w.offsetHeight + 'px';
+    w.dataset.prevLeft = w.style.left || (w.getBoundingClientRect().left + 'px');
+    w.dataset.prevTop = w.style.top || (w.getBoundingClientRect().top + 'px');
+    w.style.left = '0px';
+    w.style.top = '0px';
+    w.style.width = window.innerWidth + 'px';
+    w.style.height = (window.innerHeight - 62) + 'px'; // leave taskbar
+    w.dataset.max = '1';
+    bringToFront(w);
+  }
+}
+
+/* resizing windows */
+let resizing = null, resizeStart = {};
+function startResize(e, win){
+  e.preventDefault(); e.stopPropagation();
+  resizing = win;
+  resizeStart.x = e.clientX; resizeStart.y = e.clientY;
+  resizeStart.w = win.offsetWidth; resizeStart.h = win.offsetHeight;
+  document.addEventListener('mousemove', doResize); document.addEventListener('mouseup', stopResize);
+}
+function doResize(e){
+  if(!resizing) return;
+  const dx = e.clientX - resizeStart.x; const dy = e.clientY - resizeStart.y;
+  let newW = Math.max(300, resizeStart.w + dx); let newH = Math.max(200, resizeStart.h + dy);
+  resizing.style.width = newW + 'px'; resizing.style.height = newH + 'px';
+}
+function stopResize(){ document.removeEventListener('mousemove', doResize); document.removeEventListener('mouseup', stopResize); resizing = null; }
+
+/* dragging windows */
+let dragItem = null, dragOffsetX=0, dragOffsetY=0;
+function startDrag(ev, win){
+  ev.preventDefault();
+  dragItem = win;
+  bringToFront(dragItem);
+  const rect = dragItem.getBoundingClientRect();
+  dragOffsetX = ev.clientX - rect.left;
+  dragOffsetY = ev.clientY - rect.top;
+  document.addEventListener('mousemove', doDrag);
+  document.addEventListener('mouseup', stopDrag);
+}
+function doDrag(ev){
+  if(!dragItem) return;
+  let x = ev.clientX - dragOffsetX; let y = ev.clientY - dragOffsetY;
+  const pad = 6;
+  x = Math.max(pad, Math.min(window.innerWidth - dragItem.offsetWidth - pad, x));
+  y = Math.max(pad, Math.min(window.innerHeight - dragItem.offsetHeight - 62 - pad, y));
+  dragItem.style.left = x + 'px'; dragItem.style.top = y + 'px';
+}
+function stopDrag(){ document.removeEventListener('mousemove', doDrag); document.removeEventListener('mouseup', stopDrag); dragItem = null; }
+
+/* clicking on windows brings to front */
+document.addEventListener('mousedown', (e)=>{ const win = e.target.closest('.window'); if(win) bringToFront(win); });
+
+/* prevent select while dragging/resizing */
+document.addEventListener('selectstart', (e)=>{ if(dragItem || resizing) e.preventDefault(); });
+
+/* ------------------------------ Paint app ------------------------------ */
+const canvas = document.getElementById('paint-canvas');
+const ctx = canvas.getContext('2d');
+let painting = false;
+const brushInput = document.getElementById('brushSize');
+const colorInput = document.getElementById('brushColor');
+
+function initCanvas(){
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.lineCap = 'round';
+}
+initCanvas();
+
+canvas.addEventListener('mousedown', (e)=>{ painting=true; drawAt(e); });
+canvas.addEventListener('mouseup', ()=>{ painting=false; ctx.beginPath(); });
+canvas.addEventListener('mouseleave', ()=>{ painting=false; ctx.beginPath(); });
+canvas.addEventListener('mousemove', (e)=>{ if(painting) drawAt(e); });
+
+function drawAt(e){
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left; const y = e.clientY - rect.top;
+  ctx.fillStyle = colorInput.value;
+  ctx.beginPath();
+  ctx.arc(x, y, Math.max(1, brushInput.value/2), 0, Math.PI*2);
+  ctx.fill();
+}
+
+function clearCanvas(){ ctx.clearRect(0,0,canvas.width,canvas.height); initCanvas(); }
+function downloadCanvas(){ const link = document.createElement('a'); link.download='painting.png'; link.href=canvas.toDataURL('image/png'); link.click(); }
+
+/* ------------------------------ Word app (download) ------------------------------ */
+function downloadWord(){
+  const content = document.getElementById('word-area').innerHTML;
+  const blob = new Blob([content], {type:'text/html;charset=utf-8'});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob); link.download='document.html'; link.click();
+}
+
+/* ------------------------------ Calculator ------------------------------ */
+const calcDisplay = document.getElementById('calcDisplay');
+let calcBuffer = '';
+function calcPress(ch){
+  if(ch === 'C'){ calcBuffer=''; calcDisplay.value=''; return; }
+  if(ch === '='){
+    try{
+      if(!/^[0-9+\-*/().\s]+$/.test(calcBuffer)) throw new Error('Invalid');
+      const result = Function('"use strict";return ('+calcBuffer+')')();
+      calcDisplay.value = String(result); calcBuffer = String(result);
+    }catch(e){ calcDisplay.value='Error'; calcBuffer=''; }
+    return;
+  }
+  calcBuffer += ch; calcDisplay.value = calcBuffer;
+}
+
+/* ------------------------------ File Explorer (fake files) ------------------------------ */
+const fakeFiles = [
+  {name: 'readme.txt', type:'text', content:'Welcome to Windows 12 Fan Edition! This is a fake file.'},
+  {name: 'notes.html', type:'text', content:'<h2>Notes</h2><p>Remember to have fun!</p>'},
+  {name: 'photo.png', type:'binary', content:'(image placeholder)'},
+];
+function populateFiles(){
+  const list = document.getElementById('fileList'); list.innerHTML='';
+  fakeFiles.forEach((f,i)=>{
+    const el = document.createElement('div'); el.className='file-item';
+    el.innerText = f.name; el.onclick = ()=> previewFile(i);
+    list.appendChild(el);
+  });
+}
+function previewFile(i){
+  const f = fakeFiles[i]; const p = document.getElementById('filePreview');
+  if(f.type==='text'){ p.innerHTML = f.content; } else { p.innerText = f.content; }
+}
+
+/* ------------------------------ Win12Ai (local simulated AI) ------------------------------ */
+const aiConvo = document.getElementById('ai-convo');
+const aiInput = document.getElementById('ai-input');
+
+function appendAI(role, text){
+  const el = document.createElement('div');
+  el.className = 'ai-message ' + (role==='user' ? 'ai-user' : 'ai-bot');
+  el.innerText = text;
+  aiConvo.appendChild(el);
+  aiConvo.scrollTop = aiConvo.scrollHeight;
+}
+
+/* simple local "AI" — basic rule-based with a few canned responses */
+function generateAIResponse(prompt){
+  const p = prompt.toLowerCase().trim();
+  if(!p) return "Say something and I'll try my best!";
+  if(p.includes('hello') || p.includes('hi')) return "Hey there! I'm Win12Ai — your friendly in-browser assistant. What can I do for you?";
+  if(p.includes('who') && p.includes('you')) return "I'm Win12Ai, a fan-made AI inside this Windows 12 demo. I don't call external servers; I run locally.";
+  if(p.includes('open') && p.includes('word')) { openWindow('appWord'); return "Opening Word for you."; }
+  if(p.includes('paint')) { openWindow('appPaint'); return "Paint is open — go create something awesome!"; }
+  if(p.includes('calc') || p.includes('calculate')) return "Calculator opened. Try typing math expressions there.";
+  if(p.includes('joke')) return "Why did the computer show up at work late? It had a hard drive. 😄";
+  if(p.includes('help')) return "I can open apps, save files, or chat. Try 'open paint' or 'save document'.";
+  // fallback: echo with a twist
+  const replies = [
+    "Nice — tell me more.",
+    "Interesting! I wonder what you'd like next.",
+    "Cool. I can open apps, save your text, or tell a joke.",
+    "I don't have external internet access, but I can simulate answers locally!"
+  ];
+  return replies[Math.floor(Math.random()*replies.length)];
+}
+
+function sendAI(){
+  const txt = aiInput.value.trim();
+  if(!txt) return;
+  appendAI('user', txt); aiInput.value='';
+  playClick();
+  // simulate typing delay
+  appendAI('bot', 'Win12Ai is thinking...');
+  setTimeout(()=>{
+    // remove the 'thinking' last message
+    const last = aiConvo.querySelectorAll('.ai-message'); if(last.length) last[last.length-1].remove();
+    const resp = generateAIResponse(txt);
+    appendAI('bot', resp);
+    playClick();
+  }, 700 + Math.random()*800);
+}
+
+/* ------------------------------ Keyboard shortcuts & misc ------------------------------ */
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){ closeAllWindows(); closeStartMenu(); }
+  if(e.ctrlKey && e.key === '1') openWindow('appWord');
+  if(e.ctrlKey && e.key === '2') openWindow('appPaint');
+  if(e.ctrlKey && e.key === '3') openWindow('appCalc');
+  if(e.ctrlKey && e.key === '4') openWindow('appFiles');
+  if(e.ctrlKey && e.key === '5') openWindow('appAI');
+});
+
+/* helper */
+function closeAllWindows(){ document.querySelectorAll('.window').forEach(w=>w.style.display='none'); }
+
+/* ensure taskbar icons for visible windows on open */
+document.querySelectorAll('.window').forEach(w=>{
+  // nothing
+});
+
+/* ensure file explorer list */
+populateFiles();
+
+/* avoid accidental text selection while dragging/resizing handled above */
+
+/* auto-focus AI input when AI opened */
+function focusAI(){ setTimeout(()=>{ if(document.getElementById('appAI').style.display==='flex') aiInput.focus(); }, 220); }
+
+/* show desktop on resize so windows remain inside */
+window.addEventListener('resize', ()=>{
+  document.querySelectorAll('.window').forEach(w=>{
+    const rect = w.getBoundingClientRect();
+    if(rect.right > window.innerWidth) w.style.left = Math.max(8, window.innerWidth - rect.width - 8) + 'px';
+    if(rect.bottom > window.innerHeight - 62) w.style.top = Math.max(8, window.innerHeight - rect.height - 72) + 'px';
+  });
+});
+
+/* some UI: when opening, ensure taskbar icon exists (already handled in openWindow),
+   play click for start menu toggles etc. */
+</script>
+</body>
+</html>
